@@ -14,7 +14,6 @@
 	$: progressValue = [300 - 60 * hoursLeft - minutesLeft];
 	let isPlaying = false;
 
-	function sliderChange(event) {}
 	function togglePlay() {
 		isPlaying = !isPlaying;
 	}
@@ -85,14 +84,7 @@
 				</Dialog.Close>
 			</Dialog.Content>
 		</Dialog.Root>
-		<Slider
-			value={progressValue}
-			max={300}
-			step={1}
-			class="mx-5 flex-grow"
-			on:change={sliderChange}
-			disabled={true}
-		/>
+		<Slider value={progressValue} max={300} step={1} class="mx-5 flex-grow" disabled={true} />
 		<Button variant="outline" on:click={togglePlay}>
 			{#if isPlaying}
 				<CirclePause size="24" strokeWidth={2} />
