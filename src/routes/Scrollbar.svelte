@@ -1,1 +1,120 @@
-<h1>Hello world!</h1>
+<script lang="ts">
+	import { onMount } from 'svelte';
+	import { Slider } from '$lib/components/ui/slider/index.js';
+	import { Input } from '$lib/components/ui/input/index.js';
+	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
+	import * as Dialog from '$lib/components/ui/dialog/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
+	import { CirclePlay, CirclePause } from 'lucide-svelte';
+
+	let hoursLeft = 5;
+	let minutesLeft = 0;
+	$: currentTime = hoursLeft + ':' + (minutesLeft > 9 ? minutesLeft : '0' + minutesLeft);
+
+	$: progressValue = [300 - 60 * hoursLeft - minutesLeft];
+	let isPlaying = false;
+
+	function sliderChange(event) {}
+	function togglePlay() {
+		isPlaying = !isPlaying;
+	}
+
+	let contestURL = '';
+	let mirrorURL = '';
+</script>
+
+<div class="container">
+	<!-- Time Display and Slider -->
+	<div>{currentTime}</div>
+	<div class="controls">
+		<Dialog.Root>
+			<Dialog.Trigger class={buttonVariants({ variant: 'outline' })}>Settings</Dialog.Trigger>
+			<Dialog.Content class="sm:max-w-[425px]">
+				<Dialog.Header>
+					<Dialog.Title>Settings</Dialog.Title>
+					<Dialog.Description>Set up the original and mirrored contests.</Dialog.Description>
+					<Dialog.Description
+						>Hours and Minutes are for time remaining in original contest.</Dialog.Description
+					>
+				</Dialog.Header>
+				<div class="pa-3 grid gap-4">
+					<!-- Contest Links -->
+					<div class="grid grid-cols-4 items-center gap-4">
+						<Label for="original_contest" class="text-right">Original Contest</Label>
+						<Input
+							bind:value={contestURL}
+							id="original_contest"
+							placeholder="Kattis link..."
+							class="col-span-3"
+						/>
+					</div>
+					<div class="grid grid-cols-4 items-center gap-4">
+						<Label for="new_contest" class="text-right">Your Contest</Label>
+						<Input
+							bind:value={mirrorURL}
+							id="new_contest"
+							placeholder="Kattis link..."
+							class="col-span-3"
+						/>
+					</div>
+					<!-- Time Controls -->
+					<div class="grid grid-cols-10 gap-x-1 pb-4">
+						<div class="col-span-1"></div>
+						<Label for="hours" class="col-span-2 flex items-center justify-end">Hours</Label>
+						<Input
+							id="hours"
+							type="number"
+							bind:value={hoursLeft}
+							class="col-span-2"
+							min="0"
+							max="5"
+						/>
+						<Label for="minutes" class="col-span-2 flex items-center justify-end">Minutes</Label>
+						<Input
+							id="minutes"
+							type="number"
+							bind:value={minutesLeft}
+							class="col-span-2"
+							min="0"
+							max="59"
+						/>
+					</div>
+				</div>
+				<Dialog.Close class="flex justify-end">
+					<Button type="submit">Save changes</Button>
+				</Dialog.Close>
+			</Dialog.Content>
+		</Dialog.Root>
+		<Slider
+			value={progressValue}
+			max={300}
+			step={1}
+			class="mx-5 flex-grow"
+			on:change={sliderChange}
+			disabled={true}
+		/>
+		<Button variant="outline" on:click={togglePlay}>
+			{#if isPlaying}
+				<CirclePause size="24" strokeWidth={2} />
+			{:else}
+				<CirclePlay size="24" />
+			{/if}
+		</Button>
+	</div>
+</div>
+
+<style>
+	.container {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		margin-top: 20px;
+	}
+	.controls {
+		display: flex;
+		justify-content: space-between;
+		width: 100%;
+		max-width: 600px; /* Adjust size as needed */
+		margin-top: -10px;
+	}
+</style>

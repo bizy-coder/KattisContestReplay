@@ -14,6 +14,12 @@ const config: Config = {
 			}
 		},
 		extend: {
+      fontSize: {
+		  'sm': '.875rem', // 8px
+        'xs': '.75rem', // 8px
+        '2xs': '.625rem', // 8px
+        '3xs': '.5rem', // 8px
+      },
 			colors: {
 				border: "hsl(var(--border) / <alpha-value>)",
 				input: "hsl(var(--input) / <alpha-value>)",

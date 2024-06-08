@@ -1,8 +1,29 @@
-<script>
-	import Scrollbar from "./Scrollbar.svelte";
+<script lang="ts">
+	import Scrollbar from './Scrollbar.svelte';
+	import Table from './Table.svelte';
+
+	let url: string = '';
+	let x: string = 'test';
+
+	/** @type {number} */
+	let number: number;
+
+	async function scrapeUrl() {
+		const response = await fetch('/api/roll', {
+			method: 'POST',
+			body: JSON.stringify({ url, x }),
+			headers: {
+				'content-type': 'application/json'
+			}
+		});
+
+		let total = await response.json();
+		alert(total);
+	}
 </script>
 
+<Scrollbar />
+<Table />
 
-<Scrollbar/>
-<h1>Welcome to SvelteKit</h1>
-<p>Visit <a href="https://kit.svelte.dev">kit.svelte.dev</a> to read the documentation</p>
+<input type="text" bind:value={url} placeholder="Enter URL here" />
+<button on:click={() => scrapeUrl()}>Scrape URL</button>
