@@ -36,10 +36,15 @@ type TeamInfo = GeneralInfo & {
 
 async function getScoreboardInfo(contestURL: string): Promise<TeamInfo[]> {
     console.log(contestURL);
-    const response = await fetch(contestURL);
-    if (!response.ok) {
-        throw new Error(`Failed to fetch: ${response.status}`);
-    }
+	let response;
+	try {
+		response = await fetch(contestURL);
+		if (!response.ok) {
+			throw new Error(`Failed to fetch: ${response.status}`);
+		}
+	} catch (error) {
+		throw new Error(`Failed to fetch: ${error instanceof Error ? error.message : 'Unknown error'}`);
+	}
     const html = await response.text();
     const $ = cheerio.load(html);
     
@@ -85,11 +90,16 @@ async function getScoreboardInfo(contestURL: string): Promise<TeamInfo[]> {
 
 
 
-export const POST: RequestHandler = async ({ request }) => {	
-	const { url } = await request.json();	
-	// console.log(url);
-	let value = await getScoreboardInfo(url)
-	// console.log(value)
-	return json(value);
-
+export const POST: RequestHandler = async ({ request }) => {
+	try {
+		const { url } = await request.json();
+		const info = await getScoreboardInfo(url);
+		return new Response(JSON.stringify(info), { status: 200, headers: { 'Content-Type': 'application/json' } });
+	} catch (error) {
+		let errorMessage = 'An unknown error occurred';
+		if (error instanceof Error) {
+			errorMessage = error.message;
+		}
+		return new Response(errorMessage, { status: 500 });
+	}
 };

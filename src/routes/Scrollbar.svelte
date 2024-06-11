@@ -6,23 +6,14 @@
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
 	import { Label } from '$lib/components/ui/label/index.js';
 	import { CirclePlay, CirclePause, Plus, Minus } from 'lucide-svelte';
-	import { contestURL } from './data-store';
-	import { mirrorURL } from './data-store';
-	import { problems } from './data-store';
-	import { scoreboard_info } from './data-store';
+	import { contestURL, mirrorURL, problems, scoreboard_info } from './data-store';
 	import type { TeamInfo, ProblemInfo } from './data-store';
 
+	let hoursLeft = 5;
+	let minutesLeft = 0;
 	let hoursProgressed = 0;
 	let minutesProgressed = 0;
 	let secondsProgressed = 0;
-	$: currentTime =
-		hoursProgressed +
-		':' +
-		(minutesProgressed > 9 ? minutesProgressed : '0' + minutesProgressed) +
-		':' +
-		(secondsProgressed % 60 > 9 ? secondsProgressed % 60 : '0' + secondsProgressed);
-
-	$: progressValue = [60 * hoursProgressed - minutesProgressed];
 	let isPlaying = false;
 	let updateInterval: ReturnType<typeof setInterval>;
 	let currentTimeInterval: ReturnType<typeof setInterval>;
@@ -31,17 +22,33 @@
 	let contestURLs = writable<string[]>(['']);
 	let mirrorURLs = writable<string[]>(['']);
 
-	async function scrapeUrl(url: string): Promise<TeamInfo[]> {
-		const response = await fetch('/api/roll', {
-			method: 'POST',
-			body: JSON.stringify({ url }),
-			headers: {
-				'content-type': 'application/json'
-			}
-		});
+	$: currentTime =
+		hoursProgressed +
+		':' +
+		(minutesProgressed > 9 ? minutesProgressed : '0' + minutesProgressed) +
+		':' +
+		(secondsProgressed % 60 > 9 ? secondsProgressed % 60 : '0' + secondsProgressed);
 
-		const info = await response.json();
-		return info;
+	$: progressValue = [300 - 60 * hoursLeft - minutesLeft];
+
+	async function scrapeUrl(url: string): Promise<TeamInfo[]> {
+		try {
+			const response = await fetch('/api/roll', {
+				method: 'POST',
+				body: JSON.stringify({ url }),
+				headers: {
+					'content-type': 'application/json'
+				}
+			});
+			if (!response.ok) {
+				throw new Error('Invalid URL');
+			}
+			const info = await response.json();
+			return info;
+		} catch (error) {
+			// alert(`Error fetching data from ${url}: ${error.message}`);
+			return [];
+		}
 	}
 
 	function adjustContestProblems(team: TeamInfo, timeLimit: number): TeamInfo {
@@ -121,7 +128,6 @@
 	}
 
 	async function updatePage() {
-		secondsProgressed = 0;
 		const urlList = get(contestURLs).filter((url) => url);
 		const mirrorList = get(mirrorURLs).filter((url) => url);
 
@@ -169,8 +175,8 @@
 			currentTimeInterval = setInterval(() => {
 				secondsProgressed++;
 				if (secondsProgressed % 60 === 0) {
-					secondsProgressed %= 60;
 					minutesProgressed++;
+					secondsProgressed = 0;
 					if (minutesProgressed % 60 === 0) {
 						hoursProgressed++;
 						minutesProgressed = 0;
@@ -184,13 +190,54 @@
 		}
 	}
 
+	// Watch for changes in contestURLs and mirrorURLs to cache them
+	$: {
+		if (typeof window !== 'undefined') {
+			localStorage.setItem('contestURLs', JSON.stringify(get(contestURLs)));
+			localStorage.setItem('mirrorURLs', JSON.stringify(get(mirrorURLs)));
+			localStorage.setItem('hoursProgressed', hoursProgressed.toString());
+			localStorage.setItem('minutesProgressed', minutesProgressed.toString());
+			localStorage.setItem('secondsProgressed', secondsProgressed.toString());
+			localStorage.setItem('lastTimestamp', Date.now().toString());
+			localStorage.setItem('isPlaying', JSON.stringify(isPlaying));
+		} else {
+		}
+	}
+
+	if (typeof window !== 'undefined') {
+		const lastTimestamp = Number(localStorage.getItem('lastTimestamp')) || Date.now();
+		const toPlay = localStorage.getItem('isPlaying')
+			? localStorage.getItem('isPlaying') == 'true'
+			: false;
+
+		const elapsedSeconds = toPlay ? Math.floor((Date.now() - lastTimestamp) / 1000) : 0;
+
+		hoursProgressed = Number(localStorage.getItem('hoursProgressed')) || 0;
+		minutesProgressed = Number(localStorage.getItem('minutesProgressed')) || 0;
+		secondsProgressed = Number(localStorage.getItem('secondsProgressed')) || 0;
+
+		const totalSeconds = Math.max(
+			hoursProgressed * 3600 + minutesProgressed * 60 + secondsProgressed + elapsedSeconds,
+			5 * 3600
+		);
+
+		hoursProgressed = Math.floor(totalSeconds / 3600);
+		minutesProgressed = Math.floor((totalSeconds % 3600) / 60);
+		secondsProgressed = totalSeconds % 60;
+
+		contestURLs.set(JSON.parse(localStorage.getItem('contestURLs') || '[""]'));
+		mirrorURLs.set(JSON.parse(localStorage.getItem('mirrorURLs') || '[""]'));
+		if (toPlay) {
+			togglePlay();
+		}
+	}
+	onMount(() => {
+		updatePage(); // Initial call to updatePage when the component mounts
+	});
+
 	onDestroy(() => {
 		clearInterval(currentTimeInterval);
 	});
-
-	// onMount(() => {
-	// 	updatePage(); // Call updatePage when the component mounts
-	// });
 </script>
 
 <div class="container">
