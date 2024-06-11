@@ -35,6 +35,7 @@ type TeamInfo = GeneralInfo & {
 };
 
 async function getScoreboardInfo(contestURL: string): Promise<TeamInfo[]> {
+    console.log(contestURL);
     const response = await fetch(contestURL);
     if (!response.ok) {
         throw new Error(`Failed to fetch: ${response.status}`);
@@ -85,9 +86,9 @@ async function getScoreboardInfo(contestURL: string): Promise<TeamInfo[]> {
 
 
 export const POST: RequestHandler = async ({ request }) => {	
-	const { contestURL } = await request.json();	
-	// console.log(contestURL);
-	let value = await getScoreboardInfo(contestURL)
+	const { url } = await request.json();	
+	// console.log(url);
+	let value = await getScoreboardInfo(url)
 	// console.log(value)
 	return json(value);
 
