@@ -29,7 +29,7 @@
 		':' +
 		(secondsProgressed % 60 > 9 ? secondsProgressed % 60 : '0' + secondsProgressed);
 
-	$: progressValue = [300 - 60 * hoursLeft - minutesLeft];
+	$: progressValue = [3600 * hoursProgressed + 60 * minutesProgressed + secondsProgressed];
 
 	async function scrapeUrl(url: string): Promise<TeamInfo[]> {
 		try {
@@ -216,7 +216,7 @@
 		minutesProgressed = Number(localStorage.getItem('minutesProgressed')) || 0;
 		secondsProgressed = Number(localStorage.getItem('secondsProgressed')) || 0;
 
-		const totalSeconds = Math.max(
+		const totalSeconds = Math.min(
 			hoursProgressed * 3600 + minutesProgressed * 60 + secondsProgressed + elapsedSeconds,
 			5 * 3600
 		);
@@ -332,7 +332,7 @@
 				</Dialog.Close>
 			</Dialog.Content>
 		</Dialog.Root>
-		<Slider value={progressValue} max={300} step={1} class="mx-5 flex-grow" disabled={true} />
+		<Slider value={progressValue} max={3600 * 5} step={1} class="mx-5 flex-grow" disabled={true} />
 		<Button variant="outline" on:click={togglePlay}>
 			{#if isPlaying}
 				<CirclePause size="24" strokeWidth={2} />
