@@ -9,14 +9,13 @@
 	import { contestURL, mirrorURL, problems, scoreboard_info } from './data-store';
 	import type { TeamInfo, ProblemInfo } from './data-store';
 
-	let hoursLeft = 5;
-	let minutesLeft = 0;
 	let hoursProgressed = 0;
 	let minutesProgressed = 0;
 	let secondsProgressed = 0;
 	let isPlaying = false;
 	let updateInterval: ReturnType<typeof setInterval>;
 	let currentTimeInterval: ReturnType<typeof setInterval>;
+	let totalContestSeconds = 3600 * 5;
 
 	import { writable, get, type Writable } from 'svelte/store';
 	let contestURLs = writable<string[]>(['']);
@@ -231,8 +230,35 @@
 			togglePlay();
 		}
 	}
+	function scrollbarUpdated(event: any) {
+		hoursProgressed = Math.floor(event[0] / 3600);
+		minutesProgressed = Math.floor((event[0] % 3600) / 60);
+		secondsProgressed = event[0] % 60;
+	}
+
+	let contestUrlMoreInfo = writable<boolean[]>([]);
+	let mirrorUrlMoreInfo = writable<boolean[]>([]);
+
+	function toggleMoreInfo(urlArrayMoreInfo: Writable<boolean[]>, index: number) {
+		urlArrayMoreInfo.update((infos) => {
+			infos[index] = !infos[index];
+			return infos;
+		});
+	}
+
+	function initializeMoreInfoStates(
+		urlArray: Writable<string[]>,
+		moreInfoArray: Writable<boolean[]>
+	) {
+		urlArray.subscribe((urls) => {
+			moreInfoArray.set(urls.map(() => false));
+		});
+	}
+
 	onMount(() => {
 		updatePage(); // Initial call to updatePage when the component mounts
+		initializeMoreInfoStates(contestURLs, contestUrlMoreInfo);
+		initializeMoreInfoStates(mirrorURLs, mirrorUrlMoreInfo);
 	});
 
 	onDestroy(() => {
@@ -246,7 +272,7 @@
 	<div class="controls">
 		<Dialog.Root>
 			<Dialog.Trigger class={buttonVariants({ variant: 'outline' })}>Settings</Dialog.Trigger>
-			<Dialog.Content class="sm:max-w-[425px]">
+			<Dialog.Content class="sm:max-w-[525px]">
 				<Dialog.Header>
 					<Dialog.Title>Settings</Dialog.Title>
 					<Dialog.Description>Set up the original and mirrored contest(s).</Dialog.Description>
@@ -267,6 +293,7 @@
 								placeholder="Kattis link..."
 								class="col-span-3"
 							/>
+
 							<div class="flex space-x-2">
 								<button on:click={() => addURL(contestURLs)} class="p-1">
 									<Plus size="16" />
@@ -276,8 +303,18 @@
 										<Minus size="16" />
 									</button>
 								{/if}
+								<button on:click={() => toggleMoreInfo(contestUrlMoreInfo, index)} class="p-1">
+									{#if $contestUrlMoreInfo[index]}
+										Hide Info
+									{:else}
+										More Info
+									{/if}
+								</button>
 							</div>
 						</div>
+						{#if $contestUrlMoreInfo[index]}
+							<Input placeholder="Enter label..." />
+						{/if}
 					{/each}
 
 					{#each $mirrorURLs as mirrorURL, index}
@@ -300,8 +337,18 @@
 										<Minus size="16" />
 									</button>
 								{/if}
+								<button on:click={() => toggleMoreInfo(mirrorUrlMoreInfo, index)} class="p-1">
+									{#if $mirrorUrlMoreInfo[index]}
+										Hide Info
+									{:else}
+										More Info
+									{/if}
+								</button>
 							</div>
 						</div>
+						{#if $mirrorUrlMoreInfo[index]}
+							<Input placeholder="Enter label..." />
+						{/if}
 					{/each}
 
 					<!-- Time Controls -->
@@ -332,7 +379,13 @@
 				</Dialog.Close>
 			</Dialog.Content>
 		</Dialog.Root>
-		<Slider value={progressValue} max={3600 * 5} step={1} class="mx-5 flex-grow" disabled={true} />
+		<Slider
+			value={progressValue}
+			max={totalContestSeconds}
+			step={1}
+			class="mx-5 flex-grow"
+			onValueChange={scrollbarUpdated}
+		/>
 		<Button variant="outline" on:click={togglePlay}>
 			{#if isPlaying}
 				<CirclePause size="24" strokeWidth={2} />
