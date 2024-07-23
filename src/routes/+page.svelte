@@ -4,7 +4,7 @@
 	import Table from './Table.svelte';
 	import { problems } from './data-store';
 	import { scoreboard_info } from './data-store';
-	import Nested from './Nested.svelte';
+	// import Nested from './Nested.svelte';
 	// let contestURL = '';
 </script>
 

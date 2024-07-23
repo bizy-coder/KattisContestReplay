@@ -2,12 +2,13 @@
 	import { onMount, onDestroy } from 'svelte';
 	import { Slider } from '$lib/components/ui/slider/index.js';
 	import { Input } from '$lib/components/ui/input/index.js';
+	import { Label } from '$lib/components/ui/label/index.js';
 	import { Button, buttonVariants } from '$lib/components/ui/button/index.js';
 	import * as Dialog from '$lib/components/ui/dialog/index.js';
-	import { Label } from '$lib/components/ui/label/index.js';
 	import { CirclePlay, CirclePause, Plus, Minus } from 'lucide-svelte';
-	import { contestURL, mirrorURL, problems, scoreboard_info } from './data-store';
+	import { contestURLs, mirrorURLs, problems, scoreboard_info } from './data-store';
 	import type { TeamInfo, ProblemInfo } from './data-store';
+	import { writable, get, type Writable } from 'svelte/store';
 
 	let hoursProgressed = 0;
 	let minutesProgressed = 0;
@@ -16,10 +17,6 @@
 	let updateInterval: ReturnType<typeof setInterval>;
 	let currentTimeInterval: ReturnType<typeof setInterval>;
 	let totalContestSeconds = 3600 * 5;
-
-	import { writable, get, type Writable } from 'svelte/store';
-	let contestURLs = writable<string[]>(['']);
-	let mirrorURLs = writable<string[]>(['']);
 
 	$: currentTime =
 		hoursProgressed +
@@ -272,7 +269,7 @@
 	<div class="controls">
 		<Dialog.Root>
 			<Dialog.Trigger class={buttonVariants({ variant: 'outline' })}>Settings</Dialog.Trigger>
-			<Dialog.Content class="sm:max-w-[525px]">
+			<Dialog.Content class="max-h-screen overflow-y-scroll sm:max-w-[525px]">
 				<Dialog.Header>
 					<Dialog.Title>Settings</Dialog.Title>
 					<Dialog.Description>Set up the original and mirrored contest(s).</Dialog.Description>
